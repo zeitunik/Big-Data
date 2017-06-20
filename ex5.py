@@ -39,7 +39,7 @@ def shingles(document, q):
 	"""
 	if q < 2:
 		return document
-	f_prints = np.empty(1<<16, np.uint8)
+	f_prints = np.zeros(1<<16, dtype=np.uint8)
 
 	shingle = document[0]
 	for i in document[1:q]:
@@ -64,25 +64,31 @@ def fingerprint(shingle, q):
 	"""
 	poly = 1<<16 | 1<<13 | 1<<12 | 1<<11 | 1<<10 | 1<<9 | 1<<8 | 1<<4 | 1
 
-	pos = q*8 	# number of bytes
-    poly = poly << (pos - 16)
-    nOne = 0
-    while (pos >= 16 and not shingle == 0): # if we are smaller than the quotient, the remainder won't change
-        nOne = nextOne(shingle, pos) 
-        poly = poly >> nOne 	# shift polynomial accordingly
-        shingle ^= poly 		# division
-        pos -= nOne 			# current position of the polynomial
+	pos = q*8 	# number of bits
+    poly <<= (pos - 16)		# shift the polynomial until its and the shingle's most significant bits align
+    bits = 0 
+    while (pos >= 16 and not shingle == 0): 	# if the remainder has less than 16 bits, it won't change anymore 
+    	# find the first one in the bit string of shingle
+        temp = 1<<pos
+        while (not (temp & shingle)):
+        	temp >>= 1 	
+        	bits += 1
+
+        poly >>= bits		 	# shift polynomial, so that the ones align
+        shingle ^= poly 		# XOR - basically the remainder 
+        pos -= bits 			# current position of the polynomial
+
     return shingle
 
 
-def nextOne(s,k):
-	""" 
-		counts how many zeros there are between the kth and the largest bit
-	"""
-    c = 0
-    tester = 1 << k
-    while (not(tester & s)):
-        tester = tester >> 1
-        c = c+1
-    return c
+##### main ###
 
+docs = documents()
+
+Q = [i for i in range(2,10)] + [15, 20]
+
+for q in Q:
+	# generate the shingles and their fingerprints for all docs
+	M = [shingles(doc, q) for doc in docs]
+
+	
