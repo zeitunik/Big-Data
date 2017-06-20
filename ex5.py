@@ -63,22 +63,23 @@ def fingerprint(shingle, q):
 		x^16 + x^13 + x^12 + x^11 + x^10 + x^9 + x^8 + x^4 + 1 
 	"""
 	poly = 1<<16 | 1<<13 | 1<<12 | 1<<11 | 1<<10 | 1<<9 | 1<<8 | 1<<4 | 1
-
 	pos = q*8 	# number of bits
-    poly <<= (pos - 16)		# shift the polynomial until its and the shingle's most significant bits align
-    bits = 0 
-    while (pos >= 16 and not shingle == 0): 	# if the remainder has less than 16 bits, it won't change anymore 
-    	# find the first one in the bit string of shingle
-        temp = 1<<pos
-        while (not (temp & shingle)):
-        	temp >>= 1 	
-        	bits += 1
+	# shift the polynomial until it and the shingle align
+	poly <<= (pos - 16)
+	
+	while (pos >= 16 and not shingle == 0):# if the remainder has less than 16 bits, it won't change anymore
+		# find the first 1 in the bit string of shingle
+		bits = 0
+		temp = 1<<pos
+		while (not (temp & shingle)):
+			temp >>= 1
+			bits += 1
 
-        poly >>= bits		 	# shift polynomial, so that the ones align
-        shingle ^= poly 		# XOR - basically the remainder 
-        pos -= bits 			# current position of the polynomial
+		poly >>= bits		 	# shift polynomial, so that the ones align
+		shingle ^= poly 		# XOR - basically the remainder 
+		pos -= bits 			# current position of the polynomial
 
-    return shingle
+	return shingle
 
 def sketch_matrix(M, K):
 	"""
@@ -104,11 +105,34 @@ def sketch_matrix(M, K):
 						M_s[k][j] = hash_val
 	return M_s
 
-##### main ###
+def calculate_similarity(M_s):
+	"""
+		Calculates the similarity between the 1st and the other
+		columns of the sketch matrix M_s
+	"""
+	rows = M_s.shape[0]
+	cols = M_s.shape[1]
 
+	first_col = M_s[:,0]
+	similarities = np.zeros(cols-1)
+
+	for j in range(1, cols):
+		j_col = M_s[:,j]
+		sim = np.sum(np.equal(first_col, j_col))
+		similarities[j-1] = sim/rows				# approximate similarity
+
+	return similarities
+
+##### main #####
+
+# create 100 documents of length 1000
 docs = create_documents(100, 1000)
 
+# shingle list
 Q = [i for i in range(2,10)] + [15, 20]
+
+# open output file
+f = open('output.txt', 'w')
 
 for q in Q:
 	# generate the shingles and their fingerprints for all docs
@@ -117,4 +141,14 @@ for q in Q:
 	# get the sketch matrix for M
 	M_s = sketch_matrix(M, 100)
 
+	# calculate the similarities between the documents
+	S = calculate_similarity(M_s)
+	
+	f.write("Number of shingles:\t{}", q)
 
+	f.write([sim for sim in S])
+	
+	#print("Number of shingles:\t", q)
+	#print([sim for sim in S])
+
+f.close()
