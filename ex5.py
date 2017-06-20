@@ -3,13 +3,13 @@ import random as rnd
 import string 
 import copy
 
-def create_documents():
+def create_documents(n, l):
 	"""
-		Creates a list of 100 strings of length 1000
+		Creates a list of n strings of length l
 		1st string has random characters, the rest have increasing noise 
 	"""
-	D = np.random.randint(0, 256, 1000, dtype=np.uint8)
-	return [D]+[modify_string(D,i) for i in range(1,100)]
+	D = np.random.randint(0, 256, l, dtype=np.uint8)
+	return [D]+[modify_string(D,i) for i in range(1,n)]
 
 def modify_string(D, i):
 	"""
@@ -80,15 +80,41 @@ def fingerprint(shingle, q):
 
     return shingle
 
+def sketch_matrix(M, K):
+	"""
+		creates a sketch matrix from the matrix M, where the rows 
+		correspond to the shingles and the columns to the documents
+		K is the number of rows the resulting sketch matrix should have
+	"""
+	rows = M.shape[0]
+	cols = M.shape[1]
+	
+	M_s = np.full((K,cols), rows)	# fill the matrix by rows (cannot be a number higher than this)
+
+	# Generate hashing functions parameters
+	P = 70657								# a prime number bigger than rows (for our purposes it works)
+	H = np.random.randint(1, P-1, (K,2))	# 2 random numbers a and b for each of the K hash functions
+
+	for i in range(rows):
+		for j in range(cols):
+			if M[i,j] == 1:
+				for k in range(K):
+					hash_val = ( (H[k][0]*i + H[k][1]) % P ) % rows
+					if hash_val < M_s[k][j]:
+						M_s[k][j] = hash_val
+	return M_s
 
 ##### main ###
 
-docs = documents()
+docs = create_documents(100, 1000)
 
 Q = [i for i in range(2,10)] + [15, 20]
 
 for q in Q:
 	# generate the shingles and their fingerprints for all docs
-	M = [shingles(doc, q) for doc in docs]
+	M = np.array([shingles(doc, q) for doc in docs]).transpose()
 
-	
+	# get the sketch matrix for M
+	M_s = sketch_matrix(M, 100)
+
+
