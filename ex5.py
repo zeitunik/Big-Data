@@ -144,11 +144,11 @@ for q in Q:
 	# calculate the similarities between the documents
 	S = calculate_similarity(M_s)
 	
-	f.write("Number of shingles:\t{}", q)
+	f.write("Number of shingles:\t{}".format(q))
 
-	f.write([sim for sim in S])
+	f.write('\t'.join([str(sim) for sim in S]))
 	
-	#print("Number of shingles:\t", q)
+	#print("Number of shingles:\t{}".format(q))
 	#print([sim for sim in S])
 
 f.close()
