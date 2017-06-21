@@ -144,11 +144,16 @@ for q in Q:
 	# calculate the similarities between the documents
 	S = calculate_similarity(M_s)
 	
-	f.write("Number of shingles:\t{}", q)
+	# '{}, {}'.format(...) replaces {} with string versions of it's arguments
+	f.write("Number of shingles:\t{}\t".format(q))
 
-	f.write([sim for sim in S])
+	# '\t'.join([...]) puts all elements of [...] in a list with tabs between them
+	f.write('\t'.join([str(sim) for sim in S]))
 	
-	#print("Number of shingles:\t", q)
+	# start a new line
+	f.write('\n')
+	
+	#print("Number of shingles:\t{}".format(q))
 	#print([sim for sim in S])
 
 f.close()
