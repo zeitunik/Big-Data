@@ -16,13 +16,13 @@ def modify_string(D, i):
 		add noise to the string D
 		i noise parameter
 	"""
-	k = 3*i 	# number of random replacements
+	k = 4*i 	# number of random replacements
 	l = 2*i 	# number of random swaps
 	D_new = copy.deepcopy(D)
 	
 	for j in range(k):
 		idx = rnd.randint(0, len(D_new)-1)
-		D_new[idx] = np.random.randint(0, 256)
+		D_new[idx] = np.random.randint(0, 256, 1, dtype=np.uint8)
 
 	for j in range(l):
 		idx1 = np.random.randint(0, len(D_new))
@@ -75,7 +75,7 @@ def fingerprint(shingle, q):
 			temp >>= 1
 			bits += 1
 
-		poly >>= bits		 	# shift polynomial, so that the ones align
+		poly >>= bits		 	# shift polynomial, so that the 1s align
 		shingle ^= poly 		# XOR - basically the remainder 
 		pos -= bits 			# current position of the polynomial
 
@@ -93,14 +93,14 @@ def sketch_matrix(M, K):
 	M_s = np.full((K,cols), rows)	# fill the matrix by rows (cannot be a number higher than this)
 
 	# Generate hashing functions parameters
-	P = 70657								# a prime number bigger than rows (for our purposes it works)
+	P = 2038074743								# a prime number bigger than rows (for our purposes it works)
 	H = np.random.randint(1, P-1, (K,2))	# 2 random numbers a and b for each of the K hash functions
 
 	for i in range(rows):
 		for j in range(cols):
 			if M[i,j] == 1:
 				for k in range(K):
-					hash_val = ( (H[k][0]*i + H[k][1]) % P ) % rows
+					hash_val =  (H[k][0]*i + H[k][1]) % rows
 					if hash_val < M_s[k][j]:
 						M_s[k][j] = hash_val
 	return M_s
@@ -129,7 +129,7 @@ def calculate_similarity(M_s):
 docs = create_documents(100, 1000)
 
 # shingle list
-Q = [i for i in range(2,10)] + [15, 20]
+Q = [i for i in range(2,8)]
 
 # open output file
 f = open('output.txt', 'w')
@@ -145,15 +145,12 @@ for q in Q:
 	S = calculate_similarity(M_s)
 	
 	# '{}, {}'.format(...) replaces {} with string versions of it's arguments
-	f.write("Number of shingles:\t{}\t".format(q))
+	f.write("Number of shingles:\t{}\n".format(q))
 
 	# '\t'.join([...]) puts all elements of [...] in a list with tabs between them
 	f.write('\t'.join([str(sim) for sim in S]))
 	
 	# start a new line
-	f.write('\n')
-	
-	#print("Number of shingles:\t{}".format(q))
-	#print([sim for sim in S])
+	f.write('\n\n')
 
 f.close()
